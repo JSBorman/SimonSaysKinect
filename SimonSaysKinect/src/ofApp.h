@@ -142,6 +142,8 @@ public:
 	bool flashGreen = false;	//Flash all the buttons green
 	bool flashRed = false;		//Flash all the buttons red
 
+	ofTrueTypeFont verdana30;
+
 	Button gameBoard [5];
 	Pattern game;
 };

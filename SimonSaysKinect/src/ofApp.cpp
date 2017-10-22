@@ -6,12 +6,14 @@
 #define DEPTH_HEIGHT 424
 #define DEPTH_SIZE DEPTH_WIDTH * DEPTH_HEIGHT
 
-#define COLOR_WIDTH 1920
-#define COLOR_HEIGHT 1080
-
 //--------------------------------------------------------------
 void ofApp::setup() {
 	ofSetWindowShape(DEPTH_WIDTH, DEPTH_HEIGHT);
+
+	ofTrueTypeFont::setGlobalDpi(72);
+	verdana30.load("cooperBlack.ttf", 30, true, true);
+	verdana30.setLineHeight(34.0f);
+	verdana30.setLetterSpacing(1.035);
 
 	//Setup Kinect w/ body tracking
 	kinect.open();
@@ -41,7 +43,7 @@ void ofApp::createBoard() {
 	int spacing = ofGetWidth() / 5;
 
 	for (int i = 0; i < 5; i++) {
-		gameBoard[i] = Button(ofColor::yellow, ofColor::blue, spacing / 2 + (spacing * i), 150, 50, i);
+		gameBoard[i] = Button(ofColor(255, 112, 228), ofColor(167, 88, 0), spacing / 2 + (spacing * i), 150, 50, i);
 	}
 }
 
@@ -113,7 +115,7 @@ void ofApp::update() {
 	for (int y = 0; y < DEPTH_HEIGHT; y++) {
 		for (int x = 0; x < DEPTH_WIDTH; x++) {
 			int index = (y * DEPTH_WIDTH) + x;
-			bodyIndexImg.setColor(x, y, ofColor::white);
+			bodyIndexImg.setColor(x, y, ofColor(120, 0, 97));	//Change background color
 
 			// This is the check to see if a given pixel is inside a tracked  body or part of the background.
 			// If it's part of a body, the value will be that body's id (0-5), or will > 5 if it's
@@ -165,12 +167,10 @@ void ofApp::draw() {
 	ofSetColor(ofColor::white);
 	bodyIndexImg.draw(0, 0);
 
-	stringstream ss;
-	ss << "Current Score : " << currentScore << endl;
-	if (!bHaveAllStreams) ss << endl << "Not all streams detected!";
-
-	ofDrawBitmapStringHighlight(ss.str(), 20, 20);
-
+	//Print Score
+	ofSetColor(255, 112, 228);
+	verdana30.drawString( "Current Score: " + std::to_string(currentScore), 10, 50);
+	
 	if(displayPattern) {
 		highlightButtons();
 	}
@@ -192,7 +192,7 @@ void ofApp::draw() {
 		case 2:
 			flashGreen = true;
 			pauseInput = true;
-			currentScore += 10;
+			currentScore += 10 * game.currentLevel;
 			game.increaseLevel();
 			lastTime = ofGetElapsedTimef();
 			break;
@@ -205,17 +205,17 @@ void ofApp::draw() {
 
 	if (flashGreen || flashRed) {
 		float currentTime = ofGetElapsedTimef();
-		ofSetColor(ofColor::blue);
+		ofSetColor(167, 88, 0);
 
 		//Alternate between on and off
 		if (currentTime - lastTime < .5)
-			(flashGreen) ? ofSetColor(ofColor::forestGreen) : ofSetColor(ofColor::darkRed);
+			(flashGreen) ? ofSetColor(0, 133, 0) : ofSetColor(167, 0, 0);
 		else if (currentTime - lastTime < 1)
-			ofSetColor(ofColor::blue);
+			ofSetColor(167, 88, 0);
 		else if (currentTime - lastTime < 1.5)
-			(flashGreen) ? ofSetColor(ofColor::forestGreen) : ofSetColor(ofColor::darkRed);
+			(flashGreen) ? ofSetColor(0, 133, 0) : ofSetColor(167, 0, 0);
 		else if (currentTime - lastTime < 2)
-			ofSetColor(ofColor::blue);
+			ofSetColor(167, 88, 0);
 		else {
 			displayPattern = true;
 			flashRed = false;
