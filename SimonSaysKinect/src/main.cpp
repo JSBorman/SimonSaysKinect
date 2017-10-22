@@ -13,11 +13,6 @@ int main() {
 }
 
 /*
-
-TODO:
- - Flash green when the user hits the right button
- - Flash red if the user hit the wrong button
-
  Future Work Ideas:
  - Buttons bounce around the screen
  - Buttons set to different colors and the user has to hover the right color on it to progress (i.e hold a red ball over the red button)
