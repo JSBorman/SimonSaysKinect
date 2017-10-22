@@ -14,8 +14,9 @@
 
 //--------------------------------------------------------------
 void ofApp::setup() {
-	ofSetWindowShape(DEPTH_WIDTH * 2, DEPTH_HEIGHT);
+	ofSetWindowShape(DEPTH_WIDTH, DEPTH_HEIGHT);
 
+	//Setup Kinect w/ body tracking
 	kinect.open();
 	kinect.initDepthSource();
 	kinect.initColorSource();
@@ -31,34 +32,72 @@ void ofApp::setup() {
 	bHaveAllStreams = false;
 
 	bodyIndexImg.allocate(DEPTH_WIDTH, DEPTH_HEIGHT, OF_IMAGE_COLOR);
-	foregroundImg.allocate(DEPTH_WIDTH, DEPTH_HEIGHT, OF_IMAGE_COLOR);
-
 	colorCoords.resize(DEPTH_WIDTH * DEPTH_HEIGHT);
 
-	testingButton = Button(200, 200, 30);
+	lastTime = ofGetElapsedTimef();
+	delayTime = ofGetElapsedTimef();
+
+	//Build the game board
+	createBoard();
+	game = Pattern();
+}
+
+void ofApp::createBoard() {
+	int spacing = ofGetWidth() / 5;
+
+	for (int i = 0; i < 5; i++) {
+		gameBoard[i] = Button(ofColor::yellow, ofColor::blue, spacing / 2 + (spacing * i), 150, 50, i);
+	}
+}
+
+void ofApp::clearBoard() {
+	for (int i = 0; i < 5; i++) 
+		gameBoard[i].setButton(false);
+}
+
+void ofApp::highlightButtons() {
+	float currentTime = ofGetElapsedTimef();
+
+	//Wait between each item in pattern
+	if (currentTime - lastTime > 1) {
+		int currentHighlight = game.getNextItemPattern();
+		clearBoard();	//Ensure everything is turned off
+
+		if (currentHighlight == -1) {	//Turn off when done
+			displayPattern = false;
+			pauseInput = false;
+		}
+
+		else {	//Otherwise, display next element
+			gameBoard[currentHighlight].setButton(true);
+			lastTime = currentTime;
+		}
+	}
 }
 
 //--------------------------------------------------------------
 void ofApp::update() {
+	//Reset what was touched this frame
+	if (!pauseInput) {
+		for (int i = 0; i < 5; i++) {
+			gameBoard[i].touchedFrame(false);
+		}
+	}
+	
 	kinect.update();
-
-	//Reset button
-	testingButton.setButton(false);
 
 	// Get pixel data
 	auto& depthPix = kinect.getDepthSource()->getPixels();
 	auto& bodyIndexPix = kinect.getBodyIndexSource()->getPixels();
-	auto& colorPix = kinect.getColorSource()->getPixels();
 
 	// Make sure there's some data here, otherwise the cam probably isn't ready yet
-	if (!depthPix.size() || !bodyIndexPix.size() || !colorPix.size()) {
+	if (!depthPix.size() || !bodyIndexPix.size() ){
 		bHaveAllStreams = false;
 		return;
 	}
 	else {
 		bHaveAllStreams = true;
 	}
-
 
 	// Count number of tracked bodies
 	numBodiesTracked = 0;
@@ -69,86 +108,109 @@ void ofApp::update() {
 		}
 	}
 
-	// Do the depth space -> color space mapping
-	// More info here:
-	// https://msdn.microsoft.com/en-us/library/windowspreview.kinect.coordinatemapper.mapdepthframetocolorspace.aspx
-	// https://msdn.microsoft.com/en-us/library/dn785530.aspx
-	coordinateMapper->MapDepthFrameToColorSpace(DEPTH_SIZE, (UINT16*)depthPix.getPixels(), DEPTH_SIZE, (ColorSpacePoint*)colorCoords.data());
-
 	// Loop through the depth image
 	for (int y = 0; y < DEPTH_HEIGHT; y++) {
 		for (int x = 0; x < DEPTH_WIDTH; x++) {
 			int index = (y * DEPTH_WIDTH) + x;
 			bodyIndexImg.setColor(x, y, ofColor::white);
-			foregroundImg.setColor(x, y, ofColor::white);
 
 			// This is the check to see if a given pixel is inside a tracked  body or part of the background.
 			// If it's part of a body, the value will be that body's id (0-5), or will > 5 if it's
 			// part of the background
-			// More info here:
-			// https://msdn.microsoft.com/en-us/library/windowspreview.kinect.bodyindexframe.aspx
 			float val = bodyIndexPix[index];
 			if (val >= bodies.size()) {
 				continue;
 			}
 
-			// Give each tracked body a color value so we can tell
-			// them apart on screen
+			// Give each tracked body a color value 
 			ofColor c = ofColor::fromHsb(val * 255 / bodies.size(), 200, 255);
 			bodyIndexImg.setColor(x, y, c);
-
-			// For a given (x,y) in the depth image, lets look up where that point would be
-			// in the color image
-			ofVec2f mappedCoord = colorCoords[index];
-
-			// Mapped x/y coordinates in the color can come out as floats since it's not a 1:1 mapping
-			// between depth <-> color spaces i.e. a pixel at (100, 100) in the depth image could map
-			// to (405.84637, 238.13828) in color space
-			// So round the x/y values down to ints so that we can look up the nearest pixel
-			mappedCoord.x = floor(mappedCoord.x);
-			mappedCoord.y = floor(mappedCoord.y);
-
-			// Make sure it's within some sane bounds, and skip it otherwise
-			if (mappedCoord.x < 0 || mappedCoord.y < 0 || mappedCoord.x >= COLOR_WIDTH || mappedCoord.y >= COLOR_HEIGHT) {
-				continue;
-			}
-
+			
 			//Check if the current pixel maps is colliding with the button
-			if (testingButton.checkCollision(x, y)) {
-				testingButton.setButton(true);
-			}
+			if (!pauseInput) {
+				for (int i = 0; i < 5; i++) {
 
-			// Finally, pull the color from the color image based on its coords in
-			// the depth image
-			foregroundImg.setColor(x, y, colorPix.getColor(mappedCoord.x, mappedCoord.y));
+					// If pressing the button for the first time, register the click
+					if (gameBoard[i].checkCollision(x, y) && gameBoard[i].isBeingTouched == false) {
+						gameBoard[i].setButton(true);
+						gameBoard[i].touchedFrame(true);
+						game.userTouched(i);
+					}
+
+					//If hovering on the button, make sure to touch this frame still
+					else if (gameBoard[i].checkCollision(x, y) && gameBoard[i].isBeingTouched == true) {
+						gameBoard[i].touchedFrame(true);
+					}
+				}
+			}
 		}
 	}
 
+	//Reset the input 
+	if (!pauseInput) {
+		for (int i = 0; i < 5; i++) {
+			if (!gameBoard[i].touchedThisFrame) {
+				gameBoard[i].setButton(false);
+			}
+		}
+	}
 	// Update the images since we manipulated the pixels manually. This uploads to the
 	// pixel data to the texture on the GPU so it can get drawn to screen
 	bodyIndexImg.update();
-	foregroundImg.update();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw() {
 	ofSetColor(ofColor::white);
 	bodyIndexImg.draw(0, 0);
-	foregroundImg.draw(DEPTH_WIDTH, 0);
 
 	stringstream ss;
-	ss << "fps : " << ofGetFrameRate() << endl;
-	ss << "Tracked bodies: " << numBodiesTracked;
+	ss << "Current Score : " << currentScore << endl;
 	if (!bHaveAllStreams) ss << endl << "Not all streams detected!";
+
 	ofDrawBitmapStringHighlight(ss.str(), 20, 20);
 
-	//Update color for enabled vs. disabled
-	if(testingButton.isBeingTouched)
-		ofSetColor(testingButton.onColor);
-	else
-		ofSetColor(testingButton.offColor);
+	if(displayPattern) {
+		highlightButtons();
+	}
 
-	ofDrawCircle(testingButton.x, testingButton.y, testingButton.rad);
+	if (!pauseInput) {
+		int status = game.checkState();
+
+		switch (status) {
+		//Pattern is wrong! Game Over
+		case 1:
+			//flash red
+			game.resetGame();
+			currentScore = 0;
+			displayPattern = true;	//Remove once flashing red added
+			pauseInput = true;
+			break;
+
+		//Pattern is correct! Next level
+		case 2:
+			//flash green
+			game.increaseLevel();
+			currentScore += 10;
+			displayPattern = true;	//Remove once flashing green added
+			pauseInput = true;
+			break;
+
+		//Continue reading input
+		default:		//Pattern is still in progress
+			break;
+		}
+	}
+
+	//Draw the board
+	for (int i = 0; i < 5; i++) {
+		if (gameBoard[i].isBeingTouched)
+			ofSetColor(gameBoard[i].onColor);
+		else
+			ofSetColor(gameBoard[i].offColor);
+
+		ofDrawCircle(gameBoard[i].x, gameBoard[i].y, gameBoard[i].rad);
+	}
 }
 
 //--------------------------------------------------------------
@@ -157,51 +219,6 @@ void ofApp::keyPressed(int key) {
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseMoved(int x, int y) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseDragged(int x, int y, int button) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mousePressed(int x, int y, int button) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseReleased(int x, int y, int button) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseEntered(int x, int y) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseExited(int x, int y) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::windowResized(int w, int h) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::gotMessage(ofMessage msg) {
-
-}
-
-//--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo dragInfo) {
 
 }
 

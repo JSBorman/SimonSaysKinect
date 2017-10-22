@@ -6,17 +6,23 @@
 class Button {
 
 public:
-	ofColor onColor = ofColor::yellow;
-	ofColor offColor = ofColor::purple;
+	ofColor onColor;
+	ofColor offColor;
 
 	int x, y, rad;
+	int position;	//Stores the order this button is in row
 	bool isBeingTouched;
+	bool touchedThisFrame;
 
 	Button() {}
-	Button(int x_in, int y_in, int rad_in) {
+	Button(ofColor on_in, ofColor off_in, int x_in, int y_in, int rad_in, int position) {
+		onColor = on_in;
+		offColor = off_in;
 		x = x_in;
 		y = y_in;
 		rad = rad_in;
+		isBeingTouched = false;
+		touchedThisFrame = false;
 	}
 
 	//Return true if the input coordinates exist in this button
@@ -29,6 +35,90 @@ public:
 		isBeingTouched = input;
 	}
 
+	void touchedFrame(bool input) {
+		touchedThisFrame = input;
+	}
+
+};
+
+//Stores 
+class Pattern {
+public:
+
+	std::vector<int> correctPattern;
+	std::vector<int> currentPattern;
+
+	int currentLevel;
+	int index;	//Current index to display in the correct pattern
+
+	Pattern() {
+		currentLevel = 1;
+		index = 0;
+
+		craftPattern();
+	}
+
+	//Add the next selected button to the end of the list
+	void userTouched(int selected) {
+		currentPattern.push_back(selected);
+	}
+
+	//Get the 
+	int getNextItemPattern() {
+		if (index < correctPattern.size()) {
+			index++;
+			return correctPattern.at(index - 1);
+		}
+		else {
+			index = 0;
+			return -1;
+		}
+	}
+
+	// Checks the current pattern against the correct one
+	// Returns 0 - Pattern is still in progress
+	// Returns 1 - Pattern is wrong
+	// Returns 2 - Pattern is a match!
+	int checkState() {
+		for (int i = 0; i < currentPattern.size(); i++) {
+			if (currentPattern.at(i) != correctPattern.at(i))
+				return 1;
+		}
+
+		if (currentPattern.size() == correctPattern.size())
+			return 2;
+		
+		return 0;
+	}
+
+	//Game Over
+	void resetGame() {
+		currentLevel = 1;
+		correctPattern.clear();
+		currentPattern.clear();
+		craftPattern();
+	}
+
+	//Move to the next level
+	void increaseLevel() {
+		currentLevel++;
+		correctPattern.clear();
+		currentPattern.clear();
+		craftPattern();
+	}
+
+private:
+	//Create the current solution. Length is based on the current level
+	void craftPattern() {
+		correctPattern.clear();	//Empty the old pattern
+		
+		//FOR TESTING
+		correctPattern = { 0, 1, 2, 3, 4 };
+
+	//	for (int i = 0; i < currentLevel; i++) {
+	//		correctPattern.push_back( (int) ofRandom(0, 5));
+	//	}
+	}
 };
 
 class ofApp : public ofBaseApp {
@@ -38,27 +128,31 @@ public:
 	void update();
 	void draw();
 
+	void createBoard();		//Custom button to build the board
+	void clearBoard();		//Clear the state of all buttons on board
+	void highlightButtons();	//Activate correct buttons to show pattern
 	void keyPressed(int key);
 	void keyReleased(int key);
-	void mouseMoved(int x, int y);
-	void mouseDragged(int x, int y, int button);
-	void mousePressed(int x, int y, int button);
-	void mouseReleased(int x, int y, int button);
-	void mouseEntered(int x, int y);
-	void mouseExited(int x, int y);
-	void windowResized(int w, int h);
-	void dragEvent(ofDragInfo dragInfo);
-	void gotMessage(ofMessage msg);
 
 	ofxKFW2::Device kinect;
 	ICoordinateMapper* coordinateMapper;
 
-	ofImage bodyIndexImg, foregroundImg;
+	ofImage bodyIndexImg;
 	vector<ofVec2f> colorCoords;
 	int numBodiesTracked;
 	bool bHaveAllStreams;
 
-	Button testingButton;
+	int currentScore = 0;
+	float lastTime;
+	float delayTime;			//Delays when to reset the buttons (so not every frame)
+
+	bool pauseInput = true;		//Don't read input
+	bool displayPattern = true;	//Set the level state to display
+	bool flashGreen = false;	//Flash all the buttons green
+	bool flashRed = false;		//Flash all the buttons red
+
+	Button gameBoard [5];
+	Pattern game;
 };
 
 
