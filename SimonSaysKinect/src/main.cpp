@@ -21,6 +21,4 @@ TODO:
  - Create pattersn of active buttons, when the user hits the right order, change
  - Keep a current score as user gets the right buttons
 
-
-
 */

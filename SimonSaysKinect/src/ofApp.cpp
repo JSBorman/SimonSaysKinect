@@ -12,8 +12,6 @@
 #define COLOR_WIDTH 1920
 #define COLOR_HEIGHT 1080
 
-Button testingButton = Button(ofColor::purple, 100, 100, 20);
-
 //--------------------------------------------------------------
 void ofApp::setup() {
 	ofSetWindowShape(DEPTH_WIDTH * 2, DEPTH_HEIGHT);
@@ -37,11 +35,15 @@ void ofApp::setup() {
 
 	colorCoords.resize(DEPTH_WIDTH * DEPTH_HEIGHT);
 
+	testingButton = Button(200, 200, 30);
 }
 
 //--------------------------------------------------------------
 void ofApp::update() {
 	kinect.update();
+
+	//Reset button
+	testingButton.setButton(false);
 
 	// Get pixel data
 	auto& depthPix = kinect.getDepthSource()->getPixels();
@@ -78,7 +80,7 @@ void ofApp::update() {
 		for (int x = 0; x < DEPTH_WIDTH; x++) {
 			int index = (y * DEPTH_WIDTH) + x;
 			bodyIndexImg.setColor(x, y, ofColor::white);
-			//foregroundImg.setColor(x, y, ofColor::white);
+			foregroundImg.setColor(x, y, ofColor::white);
 
 			// This is the check to see if a given pixel is inside a tracked  body or part of the background.
 			// If it's part of a body, the value will be that body's id (0-5), or will > 5 if it's
@@ -111,29 +113,40 @@ void ofApp::update() {
 				continue;
 			}
 
+			//Check if the current pixel maps is colliding with the button
+			if (testingButton.checkCollision(x, y)) {
+				testingButton.setButton(true);
+			}
+
 			// Finally, pull the color from the color image based on its coords in
 			// the depth image
-			//foregroundImg.setColor(x, y, colorPix.getColor(mappedCoord.x, mappedCoord.y));
+			foregroundImg.setColor(x, y, colorPix.getColor(mappedCoord.x, mappedCoord.y));
 		}
 	}
 
 	// Update the images since we manipulated the pixels manually. This uploads to the
 	// pixel data to the texture on the GPU so it can get drawn to screen
 	bodyIndexImg.update();
-	//foregroundImg.update();
-
+	foregroundImg.update();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw() {
+	ofSetColor(ofColor::white);
 	bodyIndexImg.draw(0, 0);
-	//foregroundImg.draw(DEPTH_WIDTH, 0);
+	foregroundImg.draw(DEPTH_WIDTH, 0);
 
 	stringstream ss;
 	ss << "fps : " << ofGetFrameRate() << endl;
 	ss << "Tracked bodies: " << numBodiesTracked;
 	if (!bHaveAllStreams) ss << endl << "Not all streams detected!";
 	ofDrawBitmapStringHighlight(ss.str(), 20, 20);
+
+	//Update color for enabled vs. disabled
+	if(testingButton.isBeingTouched)
+		ofSetColor(testingButton.onColor);
+	else
+		ofSetColor(testingButton.offColor);
 
 	ofDrawCircle(testingButton.x, testingButton.y, testingButton.rad);
 }

@@ -3,6 +3,34 @@
 #include "ofMain.h"
 #include "ofxKinectForWindows2.h"
 
+class Button {
+
+public:
+	ofColor onColor = ofColor::yellow;
+	ofColor offColor = ofColor::purple;
+
+	int x, y, rad;
+	bool isBeingTouched;
+
+	Button() {}
+	Button(int x_in, int y_in, int rad_in) {
+		x = x_in;
+		y = y_in;
+		rad = rad_in;
+	}
+
+	//Return true if the input coordinates exist in this button
+	bool checkCollision(int x_in, int y_in) {
+		int distanceSquared = (x - x_in) * (x - x_in) + (y - y_in) * (y - y_in);
+		return distanceSquared <= rad*rad;
+	}
+
+	void setButton(bool input) {
+		isBeingTouched = input;
+	}
+
+};
+
 class ofApp : public ofBaseApp {
 
 public:
@@ -30,21 +58,7 @@ public:
 	int numBodiesTracked;
 	bool bHaveAllStreams;
 
-	//Button testingButton;
+	Button testingButton;
 };
 
-/*class Button {
 
-public:
-	ofColor color;
-	int x, y, rad;
-	bool isBeingTouched;
-
-	Button() {}
-	Button(ofColor color_in, int x_in, int y_in, int rad_in) {
-		color = color_in;
-		x = x_in;
-		y = y_in;
-		rad = rad_in;
-	}
-}; */
