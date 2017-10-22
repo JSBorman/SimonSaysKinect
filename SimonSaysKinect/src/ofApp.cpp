@@ -1,7 +1,4 @@
-// This example shows how to work with the BodyIndex image in order to create
-// a green screen effect. Note that this isn't super fast, but is helpful
-// in understanding how the different image types & coordinate spaces work
-// together. If you need performance, you will probably want to do this with shaders!
+//Body depth code referenced from the BodyIndexImage example in ofxKinectForWindows2
 
 #include "ofApp.h"
 
@@ -19,8 +16,6 @@ void ofApp::setup() {
 	//Setup Kinect w/ body tracking
 	kinect.open();
 	kinect.initDepthSource();
-	kinect.initColorSource();
-	kinect.initInfraredSource();
 	kinect.initBodySource();
 	kinect.initBodyIndexSource();
 
@@ -32,7 +27,6 @@ void ofApp::setup() {
 	bHaveAllStreams = false;
 
 	bodyIndexImg.allocate(DEPTH_WIDTH, DEPTH_HEIGHT, OF_IMAGE_COLOR);
-	colorCoords.resize(DEPTH_WIDTH * DEPTH_HEIGHT);
 
 	lastTime = ofGetElapsedTimef();
 	delayTime = ofGetElapsedTimef();
@@ -79,7 +73,6 @@ void ofApp::highlightButtons() {
 		else {
 			gameBoard[currentHighlight].setButton(true);
 			lastTime = currentTime;
-			delayTime = lastTime;
 		}
 	}
 }
@@ -112,9 +105,8 @@ void ofApp::update() {
 	numBodiesTracked = 0;
 	auto& bodies = kinect.getBodySource()->getBodies();
 	for (auto& body : bodies) {
-		if (body.tracked) {
+		if (body.tracked)
 			numBodiesTracked++;
-		}
 	}
 
 	// Loop through the depth image
@@ -189,20 +181,20 @@ void ofApp::draw() {
 		switch (status) {
 		//Pattern is wrong! Game Over
 		case 1:
-			//flash red
+			flashRed = true;
+			pauseInput = true;
 			game.resetGame();
 			currentScore = 0;
-			displayPattern = true;	//Remove once flashing red added
-			pauseInput = true;
+			lastTime = ofGetElapsedTimef();
 			break;
 
 		//Pattern is correct! Next level
 		case 2:
-			//flash green
+			flashGreen = true;
+			pauseInput = true;
 			currentScore += 10;
 			game.increaseLevel();
-			displayPattern = true;	//Remove once flashing green added
-			pauseInput = true;
+			lastTime = ofGetElapsedTimef();
 			break;
 
 		//Continue reading input
@@ -211,24 +203,39 @@ void ofApp::draw() {
 		}
 	}
 
-	//Draw the board
-	for (int i = 0; i < 5; i++) {
-		if (gameBoard[i].isBeingTouched)
-			ofSetColor(gameBoard[i].onColor);
-		else
-			ofSetColor(gameBoard[i].offColor);
+	if (flashGreen || flashRed) {
+		float currentTime = ofGetElapsedTimef();
+		ofSetColor(ofColor::blue);
 
-		ofDrawCircle(gameBoard[i].x, gameBoard[i].y, gameBoard[i].rad);
+		//Alternate between on and off
+		if (currentTime - lastTime < .5)
+			(flashGreen) ? ofSetColor(ofColor::forestGreen) : ofSetColor(ofColor::darkRed);
+		else if (currentTime - lastTime < 1)
+			ofSetColor(ofColor::blue);
+		else if (currentTime - lastTime < 1.5)
+			(flashGreen) ? ofSetColor(ofColor::forestGreen) : ofSetColor(ofColor::darkRed);
+		else if (currentTime - lastTime < 2)
+			ofSetColor(ofColor::blue);
+		else {
+			displayPattern = true;
+			flashRed = false;
+			flashGreen = false;
+		}
+
+		for (int i = 0; i < 5; i++)
+			ofDrawCircle(gameBoard[i].x, gameBoard[i].y, gameBoard[i].rad);
+	}
+
+	//Draw the board normally
+	else {
+		for (int i = 0; i < 5; i++) {
+			if (gameBoard[i].isBeingTouched)
+				ofSetColor(gameBoard[i].onColor);
+			else
+				ofSetColor(gameBoard[i].offColor);
+
+			ofDrawCircle(gameBoard[i].x, gameBoard[i].y, gameBoard[i].rad);
+		}
 	}
 }
-
-//--------------------------------------------------------------
-void ofApp::keyPressed(int key) {
-}
-
-//--------------------------------------------------------------
-void ofApp::keyReleased(int key) {
-
-}
-
 

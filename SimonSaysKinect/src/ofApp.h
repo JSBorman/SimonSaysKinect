@@ -109,11 +109,9 @@ private:
 		correctPattern.clear();	//Empty the old pattern
 		currentPattern.clear(); //Empty the users work
 
-		correctPattern = { 3, 3, 3 };
-
-	//	for (int i = 0; i < currentLevel; i++) {
-	//		correctPattern.push_back( (int) ofRandom(0, 4.99));		//Not 5 so game doesn't break w/ gameBoard[5]
-	//	}
+		for (int i = 0; i < currentLevel; i++) {
+			correctPattern.push_back( (int) ofRandom(0, 4.99));		//Not 5 so game doesn't break w/ gameBoard[5]
+		}
 	}
 };
 
@@ -127,14 +125,11 @@ public:
 	void createBoard();		//Custom button to build the board
 	void clearBoard();		//Clear the state of all buttons on board
 	void highlightButtons();	//Activate correct buttons to show pattern
-	void keyPressed(int key);
-	void keyReleased(int key);
 
 	ofxKFW2::Device kinect;
 	ICoordinateMapper* coordinateMapper;
 
 	ofImage bodyIndexImg;
-	vector<ofVec2f> colorCoords;
 	int numBodiesTracked;
 	bool bHaveAllStreams;
 
