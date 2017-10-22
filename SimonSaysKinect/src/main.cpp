@@ -17,7 +17,6 @@ int main() {
 TODO:
  - Flash green when the user hits the right button
  - Flash red if the user hit the wrong button
- - Fix awkwardness when pattern displays same button in a row
 
  Future Work Ideas:
  - Buttons bounce around the screen

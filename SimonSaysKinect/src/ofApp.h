@@ -109,9 +109,11 @@ private:
 		correctPattern.clear();	//Empty the old pattern
 		currentPattern.clear(); //Empty the users work
 
-		for (int i = 0; i < currentLevel; i++) {
-			correctPattern.push_back( (int) ofRandom(0, 4.99));
-		}
+		correctPattern = { 3, 3, 3 };
+
+	//	for (int i = 0; i < currentLevel; i++) {
+	//		correctPattern.push_back( (int) ofRandom(0, 4.99));		//Not 5 so game doesn't break w/ gameBoard[5]
+	//	}
 	}
 };
 
@@ -138,7 +140,7 @@ public:
 
 	int currentScore;
 	float lastTime;
-	float delayTime;			//Delays when to reset the buttons (so not every frame)
+	float delayTime;			//Delays when to display next button
 
 	bool pauseInput = true;		//Don't read input
 	bool displayPattern = true;	//Set the level state to display

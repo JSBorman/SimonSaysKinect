@@ -60,19 +60,26 @@ void ofApp::highlightButtons() {
 	float currentTime = ofGetElapsedTimef();
 
 	//Wait between each item in pattern
-	if (currentTime - lastTime > 1) {
-		int currentHighlight = game.getNextItemPattern();
-		clearBoard();	//Ensure everything is turned off
+	if (currentTime - lastTime > .5) {
+		clearBoard();
+	}
 
+	//Display next item in pattern
+	if (currentTime - lastTime > 1) {
+
+		int currentHighlight = game.getNextItemPattern();
+
+		//Disable if pattern is over
 		if (currentHighlight == -1) {	//Turn off when done
 			displayPattern = false;
 			pauseInput = false;
 		}
 
-		else {	//Otherwise, display next element
-			//TODO: What if the button is hit twice in a row?
+		// Display next button
+		else {
 			gameBoard[currentHighlight].setButton(true);
 			lastTime = currentTime;
+			delayTime = lastTime;
 		}
 	}
 }
