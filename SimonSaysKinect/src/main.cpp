@@ -15,15 +15,11 @@ int main() {
 /*
 
 TODO:
- - Create patterns of active buttons, 
- - Keep track of the users input
- - When the user succeeds, update the level & score
- - Keep a current score as user gets the right buttons
+ - Flash green when the user hits the right button
  - Flash red if the user hit the wrong button
+ - Fix awkwardness when pattern displays same button in a row
 
-
- Options:
- - When a button is hit, move to a different location
- - When appears, select a color and the user has to hover the right color on it to make it disappear (i.e hold a red ball over the red button
- - Simon Says style, where there is a board of buttons that have to be hit in the given order
+ Future Work Ideas:
+ - Buttons bounce around the screen
+ - Buttons set to different colors and the user has to hover the right color on it to progress (i.e hold a red ball over the red button)
 */

@@ -36,6 +36,7 @@ void ofApp::setup() {
 
 	lastTime = ofGetElapsedTimef();
 	delayTime = ofGetElapsedTimef();
+	currentScore = 0;
 
 	//Build the game board
 	createBoard();
@@ -69,6 +70,7 @@ void ofApp::highlightButtons() {
 		}
 
 		else {	//Otherwise, display next element
+			//TODO: What if the button is hit twice in a row?
 			gameBoard[currentHighlight].setButton(true);
 			lastTime = currentTime;
 		}
@@ -190,8 +192,8 @@ void ofApp::draw() {
 		//Pattern is correct! Next level
 		case 2:
 			//flash green
-			game.increaseLevel();
 			currentScore += 10;
+			game.increaseLevel();
 			displayPattern = true;	//Remove once flashing green added
 			pauseInput = true;
 			break;

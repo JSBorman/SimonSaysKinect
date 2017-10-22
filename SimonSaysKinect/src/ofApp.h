@@ -94,16 +94,12 @@ public:
 	//Game Over
 	void resetGame() {
 		currentLevel = 1;
-		correctPattern.clear();
-		currentPattern.clear();
 		craftPattern();
 	}
 
 	//Move to the next level
 	void increaseLevel() {
 		currentLevel++;
-		correctPattern.clear();
-		currentPattern.clear();
 		craftPattern();
 	}
 
@@ -111,13 +107,11 @@ private:
 	//Create the current solution. Length is based on the current level
 	void craftPattern() {
 		correctPattern.clear();	//Empty the old pattern
-		
-		//FOR TESTING
-		correctPattern = { 0, 1, 2, 3, 4 };
+		currentPattern.clear(); //Empty the users work
 
-	//	for (int i = 0; i < currentLevel; i++) {
-	//		correctPattern.push_back( (int) ofRandom(0, 5));
-	//	}
+		for (int i = 0; i < currentLevel; i++) {
+			correctPattern.push_back( (int) ofRandom(0, 4.99));
+		}
 	}
 };
 
@@ -142,7 +136,7 @@ public:
 	int numBodiesTracked;
 	bool bHaveAllStreams;
 
-	int currentScore = 0;
+	int currentScore;
 	float lastTime;
 	float delayTime;			//Delays when to reset the buttons (so not every frame)
 
