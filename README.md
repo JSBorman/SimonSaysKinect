@@ -1,2 +1,4 @@
 # SimonSaysKinect
-Simon Says re-imagining for Kinect, written in OF
+Simon Says for Kinect, written in OpenFrameworks
+
+Utilizes the ofxKinectForWindows2 addon for tracking users
